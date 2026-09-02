@@ -3,3 +3,38 @@ enum UserRole {
   CANDIDATE
   COMPANY
 }
+
+enum AssessmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum QuestionType {
+  MCQ
+  WRITTEN
+  CODING
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPT
+  EXPIRED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ResultStatus {
+  PASSED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}

@@ -1,0 +1,19 @@
+model Payment {
+  id String @id @default(uuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  amount        Int
+  credits       Int           @default(0)
+  currency      String        @default("BDT")
+  provider      String        @default("BKASH")
+  transactionId String?
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
+}

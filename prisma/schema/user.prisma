@@ -8,8 +8,12 @@ model User {
   googleId  String?
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+
+  company   Company?
+  candidate Candidate?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }

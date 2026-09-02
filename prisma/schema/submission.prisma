@@ -1,0 +1,19 @@
+model Submission {
+  id String @id @default(uuid())
+
+  attemptId  String
+  attempt    Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  questionId String   @unique
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  answer        String?
+  code          String?
+  language      String?
+  marksObtained Int     @default(0)
+  feedback      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("submissions")
+}

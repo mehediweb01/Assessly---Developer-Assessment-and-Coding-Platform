@@ -1,0 +1,18 @@
+model Result {
+  id String @id @default(uuid())
+
+  attemptId String  @unique
+  attempt   Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  totalAnswerRight Int          @default(0)
+  totalAnswerWrong Int          @default(0)
+  totalMark        Int          @default(0)
+  obtainedMark     Int          @default(0)
+  percentage       Int?
+  resultStatus     ResultStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("results")
+}

@@ -1,0 +1,21 @@
+model Company {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  creditBalance Int     @default(0)
+  companyName   String
+  description   String?
+  website       String?
+  address       String
+
+  assessments Assessment[]
+  invitations Invitation[]
+  payment     Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("companies")
+}

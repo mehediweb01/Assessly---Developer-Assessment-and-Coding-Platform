@@ -1,0 +1,25 @@
+model Question {
+  id String @id @default(uuid())
+
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  title         String
+  type          QuestionType
+  description   String?
+  mark          Int          @default(0)
+  options       String[]     @default([])
+  correctAnswer String?
+  isDeleted     Boolean      @default(false)
+  deletedAt     DateTime?
+  starterCode   String?
+  inputFormat   String?
+  outputFormat  String?
+
+  submission Submission?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("question")
+}
