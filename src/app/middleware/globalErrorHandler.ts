@@ -1,10 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
-import { Prisma } from "../../../generated/prisma/client";
+import { Prisma } from "../../generated/prisma/client";
 import config from "../config";
 import { AppError } from "../utils/AppError";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const globalErrorHandler = async (
 	err: any,
 	_req: Request,

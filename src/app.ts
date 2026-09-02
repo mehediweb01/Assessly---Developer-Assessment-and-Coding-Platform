@@ -30,7 +30,8 @@ app.use(cookieParser());
 app.get("/", async (_req: Request, res: Response) => {
 	res.status(httpStatus.OK).json({
 		success: true,
-		message: "Welcome to PH Healthcare System Backend",
+		message:
+			"Welcome to Assessly - developer assessment and coding platform - Backend",
 	});
 });
 
