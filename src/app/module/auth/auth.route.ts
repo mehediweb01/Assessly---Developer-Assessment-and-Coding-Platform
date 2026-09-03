@@ -4,23 +4,25 @@ import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { AuthController } from "./auth.controller";
 import {
-  candidateRegistrationZodSchema,
-  EmailVerificationZodSchema,
-  LoginZodSchema,
+	candidateRegistrationZodSchema,
+	EmailVerificationZodSchema,
+	forgotPasswordZodSchema,
+	LoginZodSchema,
+	resetPasswordZodSchema,
 } from "./auth.validation";
 
 const router = Router();
 
 router.post(
-  "/register",
-  validateRequest(candidateRegistrationZodSchema),
-  AuthController.registerCandidate,
+	"/register",
+	validateRequest(candidateRegistrationZodSchema),
+	AuthController.registerCandidate,
 );
 
 router.post(
-  "/verify-email",
-  validateRequest(EmailVerificationZodSchema),
-  AuthController.verifyEmail,
+	"/verify-email",
+	validateRequest(EmailVerificationZodSchema),
+	AuthController.verifyEmail,
 );
 
 router.post("/refresh-token", AuthController.refreshToken);
@@ -28,9 +30,21 @@ router.post("/refresh-token", AuthController.refreshToken);
 router.post("/login", validateRequest(LoginZodSchema), AuthController.login);
 
 router.get(
-  "/me",
-  auth(UserRole.CANDIDATE, UserRole.COMPANY, UserRole.ADMIN),
-  AuthController.getMe,
+	"/me",
+	auth(UserRole.CANDIDATE, UserRole.COMPANY, UserRole.ADMIN),
+	AuthController.getMe,
+);
+
+router.post(
+	"/forgot-password",
+	validateRequest(forgotPasswordZodSchema),
+	AuthController.forgotPassword,
+);
+
+router.post(
+	"/reset-password",
+	validateRequest(resetPasswordZodSchema),
+	AuthController.resetPassword,
 );
 
 export const AuthRoutes = router;

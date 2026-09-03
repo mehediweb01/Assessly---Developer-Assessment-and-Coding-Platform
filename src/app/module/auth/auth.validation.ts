@@ -39,3 +39,23 @@ export const LoginZodSchema = z.object({
 	email: z.email("Not a valid email address!"),
 	password: z.string("Not a string!"),
 });
+
+export const forgotPasswordZodSchema = z.object({
+	email: z.email("Not a valid email address!"),
+});
+
+export const resetPasswordZodSchema = z.object({
+	email: z.email("Not a valid email address!"),
+	newPassword: z
+		.string("Not a string!")
+		.min(6, "Password must be at least 6 characters")
+		.max(72, "Password must be at most 72 characters")
+		.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+		.regex(/[a-z]/, "Password must contain at least one lowercase letter")
+		.regex(/[0-9]/, "Password must contain at least one number")
+		.regex(
+			/[^A-Za-z0-9]/,
+			"Password must contain at least one special character",
+		),
+	otp: z.string("Not a string!").length(6, "OTP must be 6 digits"),
+});
