@@ -393,7 +393,76 @@ const forgotPassword = async (payload: IForgotPassword) => {
 };
 
 const resetPassword = async (payload: IResetPassword) => {
-	return;
+	const email = payload.email.trim().toLowerCase();
+	const { newPassword, otp } = payload;
+
+	const user = await prisma.user.findUnique({
+		where: {
+			email,
+		},
+	});
+
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found!");
+	}
+
+	if (!user.isActive) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "User is not active!");
+	}
+
+	if (user.isDeleted || user.deletedAt) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "User is deleted!");
+	}
+
+	const opt_key = `reset-password-otp:${email}`;
+	const otpValue = await redisClient.get(opt_key);
+
+	if (!otpValue) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Invalid OTP!");
+	}
+
+	if (otpValue !== otp) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Doesn't match OTP!");
+	}
+
+	const hashedPassword = await bcrypt.hash(
+		newPassword,
+		Number(config.bcrypt_salt_rounds),
+	);
+
+	const updatedUser = await prisma.user.update({
+		where: {
+			id: user.id,
+		},
+		data: {
+			password: hashedPassword,
+		},
+		select: {
+			name: true,
+			email: true,
+			role: true,
+		},
+	});
+
+	await redisClient.del(opt_key);
+
+	const ejsPath = path.join(
+		process.cwd(),
+		"src/app/templates/reset-password-success.ejs",
+	);
+
+	const html = await ejs.renderFile(ejsPath, {
+		name: user.name,
+	});
+
+	await transporter.sendMail({
+		from: config.email_sender,
+		to: user.email,
+		subject: "Password changed",
+		html,
+	});
+
+	return updatedUser;
 };
 
 export const AuthServices = {
