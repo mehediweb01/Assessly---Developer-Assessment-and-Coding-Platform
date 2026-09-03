@@ -11,4 +11,6 @@ router.post(
 	AuthController.registerCandidate,
 );
 
+router.post("/verify-email", AuthController.verifyEmail);
+
 export const AuthRoutes = router;

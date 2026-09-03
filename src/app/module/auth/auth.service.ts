@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import ejs from "ejs";
 import httpStatus from "http-status";
+import type { SignOptions } from "jsonwebtoken";
 import path from "path";
 import { UserRole } from "../../../generated/prisma/enums";
 import config from "../../config";
@@ -9,6 +10,7 @@ import { transporter } from "../../lib/nodemailer";
 import { prisma } from "../../lib/prisma";
 import { redisClient } from "../../lib/redis";
 import { AppError } from "../../utils/AppError";
+import { jwtUtils } from "../../utils/jwt";
 import type { IRegisterCandidatePayload } from "./auth.interface";
 
 const registerCandidate = async (payload: IRegisterCandidatePayload) => {
@@ -98,6 +100,117 @@ const registerCandidate = async (payload: IRegisterCandidatePayload) => {
 	});
 };
 
+const verifyEmail = async (userEmail: string, otp: string) => {
+	const email = userEmail.trim().toLowerCase();
+
+	const isUserExist = await prisma.user.findUnique({
+		where: {
+			email,
+		},
+	});
+
+	if (isUserExist) {
+		throw new AppError(httpStatus.CONFLICT, "User already exists!");
+	}
+
+	const opt_key = `register-candidate-user-otp:${email}`;
+	const otpValue = await redisClient.get(opt_key);
+
+	if (!otpValue) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Invalid OTP!");
+	}
+
+	if (otpValue !== otp) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Doesn't match OTP!");
+	}
+
+	await redisClient.del(opt_key);
+
+	const user_data_key = `register-candidate-user-data:${email}`;
+	const redisRegistrationPayload = await redisClient.get(user_data_key);
+
+	const userData: IRegisterCandidatePayload = JSON.parse(
+		redisRegistrationPayload as string,
+	);
+
+	if (userData.email !== email) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Invalid email!");
+	}
+
+	const createdUser = await prisma.user.create({
+		data: {
+			name: userData.name,
+			email: userData.email,
+			password: userData.password,
+			role: UserRole.CANDIDATE,
+			candidate: {
+				create: {
+					name: userData.name,
+					email: userData.email,
+					phone: userData.candidate.phone,
+					education: userData.candidate.education,
+					experienceYear: userData.candidate.experienceYear,
+					resumeUrl: userData.candidate.resumeUrl,
+					skills: userData.candidate.skills,
+					address: userData.candidate.address,
+				},
+			},
+		},
+		omit: {
+			password: true,
+		},
+		include: {
+			candidate: true,
+		},
+	});
+
+	await redisClient.del(user_data_key);
+
+	const ejsPath = path.join(
+		process.cwd(),
+		"src/app/templates/welcome-email.ejs",
+	);
+
+	const html = await ejs.renderFile(ejsPath, {
+		name: createdUser.name,
+	});
+
+	await transporter.sendMail({
+		from: config.email_sender,
+		to: email,
+		subject: "Welcome to Assessly - Developer Assessment and Coding Platform",
+		html,
+	});
+
+	const { candidate, ...user } = createdUser;
+	const jwtPayload = {
+		userId: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		user,
+		candidate,
+		accessToken,
+		refreshToken,
+	};
+};
+
 export const AuthServices = {
 	registerCandidate,
+	verifyEmail,
 };
