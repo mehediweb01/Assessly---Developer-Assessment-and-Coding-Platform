@@ -5,6 +5,7 @@ import { validateRequest } from "../../middleware/validateRequest";
 import { AuthController } from "./auth.controller";
 import {
 	candidateRegistrationZodSchema,
+	companyRegistrationZodSchema,
 	EmailVerificationZodSchema,
 	forgotPasswordZodSchema,
 	LoginZodSchema,
@@ -45,6 +46,13 @@ router.post(
 	"/reset-password",
 	validateRequest(resetPasswordZodSchema),
 	AuthController.resetPassword,
+);
+
+router.post(
+	"/company/register",
+	auth(UserRole.ADMIN),
+	validateRequest(companyRegistrationZodSchema),
+	AuthController.registerCompany,
 );
 
 export const AuthRoutes = router;

@@ -161,6 +161,38 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const registerCompany = catchAsync(async (req: Request, res: Response) => {
+	const payload = req.body;
+
+	const result = await AuthServices.registerCompany(payload);
+	const { accessToken, refreshToken, ...company } = result;
+
+	res.cookie("accessToken", accessToken, {
+		httpOnly: true,
+		secure: false,
+		sameSite: "none",
+		maxAge: 1000 * 60 * 60 * 24,
+	});
+
+	res.cookie("refreshToken", refreshToken, {
+		httpOnly: true,
+		secure: false,
+		sameSite: "none",
+		maxAge: 1000 * 60 * 60 * 24 * 7,
+	});
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Company registered successfully!",
+		data: {
+			accessToken,
+			refreshToken,
+			company,
+		},
+	});
+});
+
 export const AuthController = {
 	registerCandidate,
 	verifyEmail,
@@ -169,4 +201,5 @@ export const AuthController = {
 	getMe,
 	forgotPassword,
 	resetPassword,
+	registerCompany,
 };

@@ -59,3 +59,31 @@ export const resetPasswordZodSchema = z.object({
 		),
 	otp: z.string("Not a string!").length(6, "OTP must be 6 digits"),
 });
+
+export const companyRegistrationZodSchema = z.object({
+	name: z
+		.string()
+		.min(2, "Company name must be at least 2 characters")
+		.max(150, "Company name must not exceed 150 characters"),
+
+	email: z.string().email("Please provide a valid email address"),
+
+	password: z
+		.string()
+		.min(8, "Password must be at least 8 characters")
+		.max(100, "Password must not exceed 100 characters"),
+
+	company: z.object({
+		description: z
+			.string()
+			.max(1000, "Description must not exceed 1000 characters")
+			.optional(),
+
+		website: z.string().url("Please provide a valid website URL").optional(),
+
+		address: z
+			.string()
+			.max(500, "Address must not exceed 500 characters")
+			.optional(),
+	}),
+});

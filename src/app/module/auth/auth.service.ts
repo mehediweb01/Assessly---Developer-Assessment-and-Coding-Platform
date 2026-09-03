@@ -15,6 +15,7 @@ import type {
 	IForgotPassword,
 	ILoginPayload,
 	IRegisterCandidatePayload,
+	IRegisterCompanyPayload,
 	IRequestUser,
 	IResetPassword,
 } from "./auth.interface";
@@ -465,6 +466,103 @@ const resetPassword = async (payload: IResetPassword) => {
 	return updatedUser;
 };
 
+const registerCompany = async (payload: IRegisterCompanyPayload) => {
+	const {
+		name,
+		password,
+		company: { description, website, address },
+	} = payload;
+	const email = payload.email.trim().toLowerCase();
+
+	const isUserExist = await prisma.user.findUnique({
+		where: {
+			email,
+		},
+	});
+
+	if (isUserExist) {
+		throw new AppError(httpStatus.CONFLICT, "User already exists!");
+	}
+
+	const hashedPassword = await bcrypt.hash(
+		password,
+		Number(config.bcrypt_salt_rounds),
+	);
+
+	const company = await prisma.user.create({
+		data: {
+			name,
+			email,
+			password: hashedPassword,
+			role: UserRole.COMPANY,
+			company: {
+				create: {
+					companyName: name,
+					address,
+					description: description ? description : "",
+					website: website ? website : "",
+				},
+			},
+		},
+		include: {
+			company: {
+				select: {
+					companyName: true,
+					address: true,
+				},
+			},
+		},
+		omit: {
+			password: true,
+		},
+	});
+
+	const ejsPath = path.join(
+		process.cwd(),
+		"src/app/templates/welcome-email.ejs",
+	);
+
+	const html = await ejs.renderFile(ejsPath, {
+		name: company.name,
+	});
+
+	await transporter.sendMail({
+		from: config.email_sender,
+		to: email,
+		subject: "Welcome to Assessly - Developer Assessment and Coding Platform",
+		html,
+	});
+
+	const jwtPayload = {
+		userId: company.id,
+		name: company.name,
+		email: company.email,
+		role: company.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		accessToken,
+		refreshToken,
+		company: {
+			companyName: company.name,
+			email: company.email,
+			address: company.company?.address,
+		},
+	};
+};
+
 export const AuthServices = {
 	registerCandidate,
 	verifyEmail,
@@ -473,4 +571,5 @@ export const AuthServices = {
 	getMe,
 	forgotPassword,
 	resetPassword,
+	registerCompany,
 };

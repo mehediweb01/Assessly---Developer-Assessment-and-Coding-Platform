@@ -20,6 +20,15 @@ export interface IRegisterCandidatePayload extends IRegisterUser {
 	};
 }
 
+export interface IRegisterCompanyPayload extends IRegisterUser {
+	company: {
+		companyName: string;
+		description?: string;
+		website?: string;
+		address: string;
+	};
+}
+
 export interface ILoginPayload {
 	email: string;
 	password: string;
