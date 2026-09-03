@@ -9,6 +9,7 @@ import httpStatus from "http-status";
 import config from "./app/config";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
+import { AuthRoutes } from "./app/module/auth/auth.route";
 
 const app: Application = express();
 
@@ -34,6 +35,8 @@ app.get("/", async (_req: Request, res: Response) => {
 			"Welcome to Assessly - developer assessment and coding platform - Backend",
 	});
 });
+
+app.use("/api/v1/auth", AuthRoutes);
 
 app.use(globalErrorHandler);
 app.use(notFound);

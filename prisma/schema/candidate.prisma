@@ -6,7 +6,7 @@ model Candidate {
 
   name           String
   email          String   @unique
-  phone          String
+  phone          String   @unique
   bio            String?
   address        String?
   skills         String[]

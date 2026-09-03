@@ -1,0 +1,31 @@
+import z from "zod";
+
+export const candidateRegistrationZodSchema = z.object({
+	name: z
+		.string("Not a string!")
+		.min(3, "Name must be at least 3 characters")
+		.max(25, "Name must be at most 25 characters"),
+	email: z.email("Not a valid email address!"),
+	password: z
+		.string("Not a string!")
+		.min(6, "Password must be at least 6 characters")
+		.max(72, "Password must be at most 72 characters")
+		.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+		.regex(/[a-z]/, "Password must contain at least one lowercase letter")
+		.regex(/[0-9]/, "Password must contain at least one number")
+		.regex(
+			/[^A-Za-z0-9]/,
+			"Password must contain at least one special character",
+		),
+	candidate: z.object({
+		phone: z
+			.string("Not a valid phone number")
+			.min(11, "Phone number must be at least 11 characters")
+			.max(11, "Phone number must be at most 11 characters"),
+		education: z
+			.string("Not a valid education")
+			.min(3, "Education must be at least 3 characters"),
+		resumeUrl: z.url("Not a valid URL"),
+		skills: z.array(z.string("Not a valid skill")).min(1, "At least one skill"),
+	}),
+});
