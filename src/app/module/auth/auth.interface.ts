@@ -19,3 +19,8 @@ export interface IRegisterCandidatePayload extends IRegisterUser {
 		address?: string;
 	};
 }
+
+export interface ILoginPayload {
+	email: string;
+	password: string;
+}

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import ejs from "ejs";
 import httpStatus from "http-status";
-import type { SignOptions } from "jsonwebtoken";
+import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import path from "path";
 import { UserRole } from "../../../generated/prisma/enums";
 import config from "../../config";
@@ -11,7 +11,10 @@ import { prisma } from "../../lib/prisma";
 import { redisClient } from "../../lib/redis";
 import { AppError } from "../../utils/AppError";
 import { jwtUtils } from "../../utils/jwt";
-import type { IRegisterCandidatePayload } from "./auth.interface";
+import type {
+	ILoginPayload,
+	IRegisterCandidatePayload,
+} from "./auth.interface";
 
 const registerCandidate = async (payload: IRegisterCandidatePayload) => {
 	const { name, password, candidate } = payload;
@@ -210,7 +213,114 @@ const verifyEmail = async (userEmail: string, otp: string) => {
 	};
 };
 
+const refreshToken = async (token: string) => {
+	const verifiedRefreshToken = jwtUtils.verifyToken(
+		token,
+		config.jwt_refresh_secret,
+	);
+
+	if (!verifiedRefreshToken.success || !verifiedRefreshToken.data) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid refresh token!");
+	}
+
+	const data = verifiedRefreshToken.data as JwtPayload;
+
+	const user = await prisma.user.findUnique({
+		where: {
+			id: data.userId,
+		},
+	});
+
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found!");
+	}
+
+	const jwtPayload = {
+		userId: user?.id,
+		name: user?.name,
+		email: user?.email,
+		role: user?.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		accessToken,
+		refreshToken,
+	};
+};
+
+const login = async (payload: ILoginPayload) => {
+	const password = payload.password;
+	const email = payload.email.trim().toLowerCase();
+
+	const user = await prisma.user.findUnique({
+		where: {
+			email,
+		},
+	});
+
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User not found!");
+	}
+
+	if (!user.isActive) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "User is not active!");
+	}
+
+	if (user.isDeleted || user.deletedAt) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "User is deleted!");
+	}
+
+	const isMatchPassword = await bcrypt.compare(password, user.password);
+
+	if (!isMatchPassword) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials!");
+	}
+
+	const jwPayload = {
+		userId: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		accessToken,
+		refreshToken,
+		user: {
+			name: user.name,
+			email: user.email,
+			role: user.role,
+		},
+	};
+};
+
 export const AuthServices = {
 	registerCandidate,
 	verifyEmail,
+	refreshToken,
+	login,
 };

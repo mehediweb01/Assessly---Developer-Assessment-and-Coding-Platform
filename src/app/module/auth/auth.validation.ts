@@ -29,3 +29,13 @@ export const candidateRegistrationZodSchema = z.object({
 		skills: z.array(z.string("Not a valid skill")).min(1, "At least one skill"),
 	}),
 });
+
+export const EmailVerificationZodSchema = z.object({
+	email: z.email("Not a valid email address!"),
+	otp: z.string("Not a string!").length(6, "OTP must be 6 digits"),
+});
+
+export const LoginZodSchema = z.object({
+	email: z.email("Not a valid email address!"),
+	password: z.string("Not a string!"),
+});

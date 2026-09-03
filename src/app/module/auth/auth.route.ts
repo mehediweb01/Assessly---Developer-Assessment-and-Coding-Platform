@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { validateRequest } from "../../middleware/validateRequest";
 import { AuthController } from "./auth.controller";
-import { candidateRegistrationZodSchema } from "./auth.validation";
+import {
+	candidateRegistrationZodSchema,
+	EmailVerificationZodSchema,
+	LoginZodSchema,
+} from "./auth.validation";
 
 const router = Router();
 
@@ -11,6 +15,14 @@ router.post(
 	AuthController.registerCandidate,
 );
 
-router.post("/verify-email", AuthController.verifyEmail);
+router.post(
+	"/verify-email",
+	validateRequest(EmailVerificationZodSchema),
+	AuthController.verifyEmail,
+);
+
+router.post("/refresh-token", AuthController.refreshToken);
+
+router.post("/login", validateRequest(LoginZodSchema), AuthController.login);
 
 export const AuthRoutes = router;
