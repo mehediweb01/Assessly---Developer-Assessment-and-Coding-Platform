@@ -1,11 +1,13 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import ejs from "ejs";
+import type { TokenPayload } from "google-auth-library";
 import httpStatus from "http-status";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import path from "path";
-import { UserRole } from "../../../generated/prisma/enums";
+import { AuthProvider, UserRole } from "../../../generated/prisma/enums";
 import config from "../../config";
+import { googleClient } from "../../lib/googleAuth";
 import { transporter } from "../../lib/nodemailer";
 import { prisma } from "../../lib/prisma";
 import { redisClient } from "../../lib/redis";
@@ -13,6 +15,7 @@ import { AppError } from "../../utils/AppError";
 import { jwtUtils } from "../../utils/jwt";
 import type {
 	IForgotPassword,
+	IGoogleLoginPayload,
 	ILoginPayload,
 	IRegisterCandidatePayload,
 	IRegisterCompanyPayload,
@@ -286,7 +289,10 @@ const login = async (payload: ILoginPayload) => {
 		throw new AppError(httpStatus.UNAUTHORIZED, "User is deleted!");
 	}
 
-	const isMatchPassword = await bcrypt.compare(password, user.password);
+	const isMatchPassword = await bcrypt.compare(
+		password,
+		user.password as string,
+	);
 
 	if (!isMatchPassword) {
 		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials!");
@@ -563,6 +569,157 @@ const registerCompany = async (payload: IRegisterCompanyPayload) => {
 	};
 };
 
+const googleLogin = async (payload: IGoogleLoginPayload) => {
+	let googleIdTokenPayload: TokenPayload | null | undefined = null;
+
+	try {
+		const ticket = await googleClient.verifyIdToken({
+			idToken: payload.idToken,
+			audience: config.google_client_id,
+		});
+
+		googleIdTokenPayload = ticket.getPayload();
+	} catch (error) {
+		console.log("Google Id Token Verification Failed: ", error);
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"Invalid or Expired Google Id Token",
+		);
+	}
+
+	if (!googleIdTokenPayload) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"Invalid or Expired Google Id Token",
+		);
+	}
+
+	if (!googleIdTokenPayload.email) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Google email not found");
+	}
+
+	if (!googleIdTokenPayload.name) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Google name not found");
+	}
+
+	const isCandidateExistWithGoogleAuth = await prisma.user.findUnique({
+		where: {
+			email: googleIdTokenPayload.email,
+			role: UserRole.CANDIDATE,
+			googleId: googleIdTokenPayload.sub,
+		},
+	});
+
+	let user = isCandidateExistWithGoogleAuth;
+
+	if (!isCandidateExistWithGoogleAuth) {
+		const isCandidateExistWithCredentitals = await prisma.user.findUnique({
+			where: {
+				email: googleIdTokenPayload.email,
+				role: UserRole.CANDIDATE,
+				authProvider: AuthProvider.CREDENTIAL,
+			},
+		});
+
+		if (isCandidateExistWithCredentitals) {
+			if (!isCandidateExistWithCredentitals.isActive) {
+				throw new AppError(httpStatus.BAD_REQUEST, "User is not active");
+			}
+
+			if (
+				isCandidateExistWithCredentitals.isDeleted ||
+				isCandidateExistWithCredentitals.deletedAt
+			) {
+				throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+			}
+
+			user = await prisma.user.update({
+				where: {
+					id: isCandidateExistWithCredentitals.id,
+					authProvider: AuthProvider.CREDENTIAL,
+					role: UserRole.CANDIDATE,
+				},
+				data: {
+					googleId: googleIdTokenPayload.sub,
+				},
+			});
+		} else {
+			user = await prisma.user.create({
+				data: {
+					name: googleIdTokenPayload.name,
+					email: googleIdTokenPayload.email,
+					role: UserRole.CANDIDATE,
+					authProvider: AuthProvider.GOOGLE,
+					googleId: googleIdTokenPayload.sub,
+					candidate: {
+						create: {
+							name: googleIdTokenPayload.name,
+							email: googleIdTokenPayload.email,
+							education: "",
+							skills: [""],
+							resumeUrl: "",
+							phone: "",
+						},
+					},
+				},
+			});
+
+			const ejsPath = path.join(
+				process.cwd(),
+				"src/app/templates/welcome-email.ejs",
+			);
+
+			const html = await ejs.renderFile(ejsPath, {
+				name: user.name,
+			});
+
+			await transporter.sendMail({
+				from: config.email_sender,
+				to: user.email,
+				subject:
+					"Welcome to Assessly - Developer Assessment and Coding Platform",
+				html,
+			});
+		}
+	}
+
+	if (!user) {
+		throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+	}
+
+	if (!user.isActive) {
+		throw new AppError(httpStatus.BAD_REQUEST, "User is not active");
+	}
+
+	if (user.isDeleted || user.deletedAt) {
+		throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+	}
+
+	const jwtPayload = {
+		userId: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		accessToken,
+		refreshToken,
+	};
+};
+
 export const AuthServices = {
 	registerCandidate,
 	verifyEmail,
@@ -572,4 +729,5 @@ export const AuthServices = {
 	forgotPassword,
 	resetPassword,
 	registerCompany,
+	googleLogin,
 };

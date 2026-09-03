@@ -55,4 +55,6 @@ router.post(
 	AuthController.registerCompany,
 );
 
+router.post("/google", AuthController.googleLogin);
+
 export const AuthRoutes = router;
