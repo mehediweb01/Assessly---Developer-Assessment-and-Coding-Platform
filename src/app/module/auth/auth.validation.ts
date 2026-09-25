@@ -81,9 +81,6 @@ export const companyRegistrationZodSchema = z.object({
 
 		website: z.string().url("Please provide a valid website URL").optional(),
 
-		address: z
-			.string()
-			.max(500, "Address must not exceed 500 characters")
-			.optional(),
+		address: z.string().max(500, "Address must not exceed 500 characters"),
 	}),
 });
