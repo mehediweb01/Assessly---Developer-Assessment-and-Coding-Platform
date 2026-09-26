@@ -17,4 +17,10 @@ router.post(
 	AssessmentController.addQuestion,
 );
 
+router.patch(
+	"/publish",
+	auth(UserRole.COMPANY),
+	AssessmentController.assessmentPublish,
+);
+
 export const AssessmentRoutes = router;

@@ -1,3 +1,4 @@
+import { AssessmentStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import type { IRequestUser } from "../auth/auth.interface";
 import type { IAddQuestion, IAssessmentCreate } from "./assessment.interface";
@@ -117,7 +118,75 @@ const addQuestion = async (payload: IAddQuestion, user: IRequestUser) => {
 	return question;
 };
 
+const assessmentPublish = async (
+	payload: {
+		assessmentId: string;
+	},
+	user: IRequestUser,
+) => {
+	const { assessmentId } = payload;
+
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			company: true,
+		},
+	});
+
+	if (!isUserExists) {
+		throw new Error("Company not found");
+	}
+
+	if (!isUserExists.isActive) {
+		throw new Error("Company is not active");
+	}
+
+	if (isUserExists.isDeleted || isUserExists.deletedAt) {
+		throw new Error("Company is deleted");
+	}
+
+	if (!isUserExists.company) {
+		throw new Error("Company not found");
+	}
+
+	const assessment = await prisma.assessment.findUnique({
+		where: {
+			id: assessmentId,
+		},
+		include: {
+			questions: true,
+			_count: {
+				select: {
+					questions: true,
+				},
+			},
+		},
+	});
+
+	if (!assessment) {
+		throw new Error("Assessment not found");
+	}
+
+	if (assessment._count.questions < 1) {
+		throw new Error("Assessment must have at least 1 question");
+	}
+
+	const assessmentPublished = await prisma.assessment.update({
+		where: {
+			id: assessment.id,
+		},
+		data: {
+			status: AssessmentStatus.PUBLISHED,
+		},
+	});
+
+	return assessmentPublished;
+};
+
 export const AssessmentServices = {
 	createdAssessment,
 	addQuestion,
+	assessmentPublish,
 };

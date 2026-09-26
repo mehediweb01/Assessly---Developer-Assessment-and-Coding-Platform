@@ -33,7 +33,22 @@ const addQuestion = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const assessmentPublish = catchAsync(async (req: Request, res: Response) => {
+	const payload = req.body;
+	const user = req.user as IRequestUser;
+
+	const result = await AssessmentServices.assessmentPublish(payload, user);
+
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: " Assessment published successfully",
+		data: result,
+	});
+});
+
 export const AssessmentController = {
 	createAssessment,
 	addQuestion,
+	assessmentPublish,
 };
