@@ -19,18 +19,18 @@ const initiatePayment = catchAsync(async (req: Request, res: Response) => {
 });
 
 const paymentExecute = catchAsync(async (req: Request, res: Response) => {
-  const query = req.query;
-  const result = await PaymentServices.paymentExecute(query);
+	const query = req.query;
+	const result = await PaymentServices.paymentExecute(query);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Payment executed successfully",
-    data: result,
-  });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Payment executed successfully",
+		data: result,
+	});
 });
 
 export const PaymentController = {
-  initiatePayment,
-  paymentExecute,
+	initiatePayment,
+	paymentExecute,
 };
