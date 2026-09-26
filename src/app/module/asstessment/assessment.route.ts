@@ -11,4 +11,10 @@ router.post(
 	AssessmentController.createAssessment,
 );
 
+router.post(
+	"/add-question",
+	auth(UserRole.COMPANY),
+	AssessmentController.addQuestion,
+);
+
 export const AssessmentRoutes = router;

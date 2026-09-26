@@ -19,6 +19,21 @@ const createAssessment = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const addQuestion = catchAsync(async (req: Request, res: Response) => {
+	const payload = req.body;
+	const user = req.user as IRequestUser;
+
+	const result = await AssessmentServices.addQuestion(payload, user);
+
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: "Question created successfully",
+		data: result,
+	});
+});
+
 export const AssessmentController = {
 	createAssessment,
+	addQuestion,
 };
