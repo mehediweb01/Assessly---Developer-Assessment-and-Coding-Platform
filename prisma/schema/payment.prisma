@@ -8,9 +8,8 @@ model Payment {
   credits               Int           @default(0)
   currency              String        @default("BDT")
   provider              String        @default("BKASH")
-  transactionId         String?
   status                PaymentStatus @default(PENDING)
-  paidAt                DateTime?
+  paidAt                String?
   merchantInvoiceNumber String        @unique
   bkashPaymentId        String?       @unique
   bkashTrxId            String?

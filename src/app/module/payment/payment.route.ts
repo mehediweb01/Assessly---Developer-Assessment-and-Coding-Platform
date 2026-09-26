@@ -11,4 +11,6 @@ router.post(
 	PaymentController.initiatePayment,
 );
 
+router.get("/company/callback", PaymentController.paymentExecute);
+
 export const PaymentRoutes = router;
