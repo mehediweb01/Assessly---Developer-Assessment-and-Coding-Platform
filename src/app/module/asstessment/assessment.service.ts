@@ -157,6 +157,7 @@ const assessmentPublish = async (
 		},
 		include: {
 			questions: true,
+			company: true,
 			_count: {
 				select: {
 					questions: true,
@@ -171,6 +172,10 @@ const assessmentPublish = async (
 
 	if (assessment._count.questions < 1) {
 		throw new Error("Assessment must have at least 1 question");
+	}
+
+	if (assessment.company.id !== isUserExists.company.id) {
+		throw new Error("You are not authorized to publish this assessment");
 	}
 
 	const assessmentPublished = await prisma.assessment.update({
