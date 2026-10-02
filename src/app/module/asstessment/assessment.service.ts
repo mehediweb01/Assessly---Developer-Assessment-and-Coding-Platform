@@ -78,6 +78,24 @@ const addQuestion = async (payload: IAddQuestion, user: IRequestUser) => {
 		throw new Error("Company credit balance is less than 2");
 	}
 
+	if (!payload.assessmentId) {
+		throw new Error("Assessment ID not found");
+	}
+
+	const assessment = await prisma.assessment.findUnique({
+		where: {
+			id: payload.assessmentId,
+		},
+	});
+
+	if (!assessment) {
+		throw new Error("Assessment not found");
+	}
+
+	if (isUserExists.company.id !== assessment.companyId) {
+		throw new Error("You are not the owner of this assessment");
+	}
+
 	const question = await prisma.question.create({
 		data: {
 			title: payload.title,
