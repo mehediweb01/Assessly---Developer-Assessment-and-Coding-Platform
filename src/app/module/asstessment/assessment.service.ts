@@ -1,7 +1,11 @@
 import { AssessmentStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import type { IRequestUser } from "../auth/auth.interface";
-import type { IAddQuestion, IAssessmentCreate } from "./assessment.interface";
+import type {
+	IAddQuestion,
+	IAssessmentCreate,
+	IUpdateQuestion,
+} from "./assessment.interface";
 
 const createdAssessment = async (
 	payload: IAssessmentCreate,
@@ -103,6 +107,7 @@ const addQuestion = async (payload: IAddQuestion, user: IRequestUser) => {
 			mark: payload.mark,
 			options: payload.options,
 			correctAnswer: payload.correctAnswer,
+			description: payload.description,
 			assessment: {
 				connect: {
 					id: payload.assessmentId,
@@ -279,9 +284,107 @@ const deleteQuestion = async (
 	});
 };
 
+const editQuestion = async (
+	payload: IUpdateQuestion,
+	questionId: string,
+	user: IRequestUser,
+) => {
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			company: true,
+		},
+	});
+
+	if (!isUserExists) {
+		throw new Error("Company not found");
+	}
+
+	if (!isUserExists.company) {
+		throw new Error("Company not found");
+	}
+
+	if (!isUserExists.isActive) {
+		throw new Error("Company is not active");
+	}
+
+	if (isUserExists.isDeleted || isUserExists.deletedAt) {
+		throw new Error("Company is deleted");
+	}
+
+	if (!questionId) {
+		throw new Error("Question id is required");
+	}
+
+	const question = await prisma.question.findUnique({
+		where: {
+			id: questionId,
+		},
+		include: {
+			assessment: {
+				include: {
+					company: true,
+				},
+			},
+		},
+	});
+
+	if (!question) {
+		throw new Error("Question not found");
+	}
+
+	if (question.assessment.company.id !== isUserExists.company.id) {
+		throw new Error("You are not authorized to delete this question");
+	}
+
+	if (question.isDeleted || question.deletedAt) {
+		throw new Error("Question already deleted!");
+	}
+
+	if (
+		question.assessment.status === AssessmentStatus.PUBLISHED ||
+		question.assessment.status === AssessmentStatus.CLOSED
+	) {
+		throw new Error("You can't edit a published or closed question");
+	}
+
+	if (
+		payload.title === question.title ||
+		payload.mark === question.mark ||
+		payload.correctAnswer === question.correctAnswer
+	) {
+		throw new Error("No changes found");
+	}
+
+	const updatedQuestion = await prisma.question.update({
+		where: {
+			id: question.id,
+		},
+		data: {
+			title: payload.title,
+			options: payload.options,
+			mark: payload.mark,
+			correctAnswer: payload.correctAnswer,
+			description: payload.description,
+		},
+	});
+
+	return {
+		assessmentId: updatedQuestion.assessmentId,
+		title: updatedQuestion.title,
+		description: updatedQuestion.description,
+		options: updatedQuestion.options,
+		mark: updatedQuestion.mark,
+		correctAnswer: updatedQuestion.correctAnswer,
+	};
+};
+
 export const AssessmentServices = {
 	createdAssessment,
 	addQuestion,
 	assessmentPublish,
 	deleteQuestion,
+	editQuestion,
 };

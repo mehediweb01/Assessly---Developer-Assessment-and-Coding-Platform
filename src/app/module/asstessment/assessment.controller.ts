@@ -61,9 +61,29 @@ const deleteQuestion = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const editQuestion = catchAsync(async (req: Request, res: Response) => {
+	const payload = req.body;
+	const user = req.user as IRequestUser;
+	const questionId = req.params.questionId as string;
+
+	const result = await AssessmentServices.editQuestion(
+		payload,
+		questionId,
+		user,
+	);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Question edited successfully",
+		data: result,
+	});
+});
+
 export const AssessmentController = {
 	createAssessment,
 	addQuestion,
 	assessmentPublish,
 	deleteQuestion,
+	editQuestion,
 };

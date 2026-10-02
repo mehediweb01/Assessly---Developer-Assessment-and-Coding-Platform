@@ -29,4 +29,10 @@ router.delete(
 	AssessmentController.deleteQuestion,
 );
 
+router.patch(
+	"/edit-question/:questionId",
+	auth(UserRole.COMPANY),
+	AssessmentController.editQuestion,
+);
+
 export const AssessmentRoutes = router;
