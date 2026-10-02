@@ -6,27 +6,27 @@ import { AssessmentController } from "./assessment.controller";
 const router = Router();
 
 router.post(
-  "/create",
-  auth(UserRole.COMPANY),
-  AssessmentController.createAssessment,
+	"/create",
+	auth(UserRole.COMPANY),
+	AssessmentController.createAssessment,
 );
 
 router.post(
-  "/add-question",
-  auth(UserRole.COMPANY),
-  AssessmentController.addQuestion,
+	"/add-question",
+	auth(UserRole.COMPANY),
+	AssessmentController.addQuestion,
 );
 
 router.patch(
-  "/publish",
-  auth(UserRole.COMPANY),
-  AssessmentController.assessmentPublish,
+	"/publish",
+	auth(UserRole.COMPANY),
+	AssessmentController.assessmentPublish,
 );
 
 router.delete(
-  "/question-delete",
-  auth(UserRole.COMPANY),
-  AssessmentController.deleteQuestion,
+	"/question-delete",
+	auth(UserRole.COMPANY),
+	AssessmentController.deleteQuestion,
 );
 
 export const AssessmentRoutes = router;
