@@ -19,6 +19,22 @@ const sendInvitation = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const acceptInvitation = catchAsync(async (req: Request, res: Response) => {
+	const payload = req.body;
+	const user = req.user as IRequestUser;
+	const { otp, invitationId } = payload;
+
+	await InvitationService.acceptInvitation(otp, invitationId, user);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Invitation accepted successfully!",
+		data: null,
+	});
+});
+
 export const InvitationController = {
 	sendInvitation,
+	acceptInvitation,
 };

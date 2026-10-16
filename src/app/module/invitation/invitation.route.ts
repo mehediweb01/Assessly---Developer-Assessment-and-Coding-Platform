@@ -11,4 +11,10 @@ router.post(
 	InvitationController.sendInvitation,
 );
 
+router.post(
+	"/accept",
+	auth(UserRole.CANDIDATE),
+	InvitationController.acceptInvitation,
+);
+
 export const InvitationRoutes = router;
