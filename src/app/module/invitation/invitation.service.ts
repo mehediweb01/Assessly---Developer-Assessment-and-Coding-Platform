@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { formatDate } from "date-fns";
 import ejs from "ejs";
 import path from "path";
 import { InvitationStatus, UserRole } from "../../../generated/prisma/enums";
@@ -185,6 +186,15 @@ const acceptInvitation = async (
 			id: invitationId,
 			candidateId: isExistingCandidate.id,
 		},
+		include: {
+			assessment: true,
+			candidate: true,
+			company: {
+				include: {
+					user: true,
+				},
+			},
+		},
 	});
 
 	if (!invitation) {
@@ -231,6 +241,7 @@ const acceptInvitation = async (
 		},
 		data: {
 			status: InvitationStatus.ACCEPT,
+			acceptAt: new Date(),
 		},
 	});
 
@@ -239,6 +250,39 @@ const acceptInvitation = async (
 	}
 
 	await redisClient.del(otp_key);
+
+	const updatedInvitation = await prisma.invitation.findFirst({
+		where: {
+			id: invitation.id,
+		},
+	});
+
+	if (!updatedInvitation) {
+		throw new Error("Invitation is no longer valid!");
+	}
+
+	const ejsPath = path.join(
+		process.cwd(),
+		"src/app/templates/accept-invitation-information.ejs",
+	);
+
+	const html = await ejs.renderFile(ejsPath, {
+		companyName: invitation.company.companyName,
+		candidateName: invitation.candidate.name,
+		assessmentTitle: invitation.assessment.title,
+		candidateEmail: invitation.candidate.email,
+		acceptedAt: updatedInvitation.acceptAt
+			? formatDate(updatedInvitation.acceptAt, "MMMM do yyyy, h:mm:ss a")
+			: "N/A",
+		year: new Date().getFullYear(),
+	});
+
+	await transporter.sendMail({
+		from: config.email_sender,
+		to: invitation.company.user.email,
+		subject: "Candidate Accepted Invitation",
+		html,
+	});
 };
 
 export const InvitationService = {
