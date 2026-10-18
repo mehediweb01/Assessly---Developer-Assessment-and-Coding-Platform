@@ -448,6 +448,29 @@ const startAssessment = async (assessmentId: string, user: IRequestUser) => {
 		throw new Error("You are not invited to this assessment");
 	}
 
+	const existingAttempt = await prisma.attempt.findFirst({
+		where: {
+			candidateId: isUserExists.candidate?.id,
+			assessmentId: assessment.id,
+			status: AttemptStatus.IN_PROGRESS,
+		},
+	});
+
+	if (existingAttempt) {
+		if (existingAttempt.expiresAt <= new Date()) {
+			await prisma.attempt.update({
+				where: {
+					id: existingAttempt.id,
+				},
+				data: {
+					status: AttemptStatus.EXPIRED,
+				},
+			});
+		} else {
+			return existingAttempt;
+		}
+	}
+
 	await prisma.attempt.create({
 		data: {
 			expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
@@ -472,11 +495,13 @@ const startAssessment = async (assessmentId: string, user: IRequestUser) => {
 	});
 
 	return {
-		assessmentId: assessment.id,
-		title: assessment.title,
-		startDateTime: assessment.startDateTime,
-		endDateTime: assessment.endDateTime,
-		status: assessment.status,
+		assessment: {
+			assessmentId: assessment.id,
+			title: assessment.title,
+			startDateTime: assessment.startDateTime,
+			endDateTime: assessment.endDateTime,
+			status: assessment.status,
+		},
 	};
 };
 
