@@ -35,4 +35,10 @@ router.patch(
 	AssessmentController.editQuestion,
 );
 
+router.post(
+	"/:assessmentId/start",
+	auth(UserRole.CANDIDATE),
+	AssessmentController.startAssessment,
+);
+
 export const AssessmentRoutes = router;

@@ -1,4 +1,7 @@
-import { AssessmentStatus } from "../../../generated/prisma/enums";
+import {
+	AssessmentStatus,
+	AttemptStatus,
+} from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import type { IRequestUser } from "../auth/auth.interface";
 import type {
@@ -381,10 +384,107 @@ const editQuestion = async (
 	};
 };
 
+const startAssessment = async (assessmentId: string, user: IRequestUser) => {
+	if (!assessmentId) {
+		throw new Error("Assessment id is required");
+	}
+
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			candidate: {
+				include: {
+					invitations: true,
+				},
+			},
+		},
+	});
+
+	if (!isUserExists) {
+		throw new Error("User not found");
+	}
+
+	if (isUserExists.isDeleted || isUserExists.deletedAt) {
+		throw new Error("User is deleted");
+	}
+
+	if (!isUserExists.isActive) {
+		throw new Error("User is not active");
+	}
+
+	if (isUserExists.role !== "CANDIDATE") {
+		throw new Error("User is not a candidate");
+	}
+
+	const assessment = await prisma.assessment.findUnique({
+		where: {
+			id: assessmentId,
+		},
+	});
+
+	if (!assessment) {
+		throw new Error("Assessment not found");
+	}
+
+	if (assessment.status !== AssessmentStatus.PUBLISHED) {
+		throw new Error("Assessment is not published");
+	}
+
+	if (new Date() < new Date(assessment.startDateTime)) {
+		throw new Error("Assessment has not started yet");
+	}
+
+	if (new Date() > new Date(assessment.endDateTime)) {
+		throw new Error("Assessment has ended");
+	}
+
+	const userAssessment = isUserExists.candidate?.invitations.find(
+		(invitation) => invitation.assessmentId === assessment.id,
+	);
+
+	if (!userAssessment) {
+		throw new Error("You are not invited to this assessment");
+	}
+
+	await prisma.attempt.create({
+		data: {
+			expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+			candidate: {
+				connect: {
+					id: isUserExists.candidate?.id,
+				},
+			},
+			assessment: {
+				connect: {
+					id: assessment.id,
+				},
+			},
+			invitation: {
+				connect: {
+					id: userAssessment.id,
+				},
+			},
+			startedAt: new Date(),
+			status: AttemptStatus.IN_PROGRESS,
+		},
+	});
+
+	return {
+		assessmentId: assessment.id,
+		title: assessment.title,
+		startDateTime: assessment.startDateTime,
+		endDateTime: assessment.endDateTime,
+		status: assessment.status,
+	};
+};
+
 export const AssessmentServices = {
 	createdAssessment,
 	addQuestion,
 	assessmentPublish,
 	deleteQuestion,
 	editQuestion,
+	startAssessment,
 };

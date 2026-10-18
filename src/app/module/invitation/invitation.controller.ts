@@ -9,13 +9,13 @@ const sendInvitation = catchAsync(async (req: Request, res: Response) => {
 	const payload = req.body;
 	const user = req.user as IRequestUser;
 
-	await InvitationService.sendInvitation(payload, user);
+	const data = await InvitationService.sendInvitation(payload, user);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
 		message: "Invitation sent successfully!",
-		data: null,
+		data,
 	});
 });
 
@@ -24,13 +24,17 @@ const acceptInvitation = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as IRequestUser;
 	const { otp, invitationId } = payload;
 
-	await InvitationService.acceptInvitation(otp, invitationId, user);
+	const data = await InvitationService.acceptInvitation(
+		otp,
+		invitationId,
+		user,
+	);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,
 		message: "Invitation accepted successfully!",
-		data: null,
+		data,
 	});
 });
 

@@ -80,10 +80,25 @@ const editQuestion = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const startAssessment = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user as IRequestUser;
+	const assessmentId = req.params.assessmentId as string;
+
+	const result = await AssessmentServices.startAssessment(assessmentId, user);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Assessment started successfully",
+		data: result,
+	});
+});
+
 export const AssessmentController = {
 	createAssessment,
 	addQuestion,
 	assessmentPublish,
 	deleteQuestion,
 	editQuestion,
+	startAssessment,
 };

@@ -141,6 +141,18 @@ const sendInvitation = async (
 		subject: "Invitation to join Assessly",
 		html,
 	});
+
+	return {
+		assessment: {
+			id: isOwnerOfAssessment.id,
+			title: isOwnerOfAssessment.title,
+		},
+		candidate: {
+			id: isUserExits.id,
+			name: isUserExits.name,
+			email: isUserExits.email,
+		},
+	};
 };
 
 const acceptInvitation = async (
@@ -283,6 +295,13 @@ const acceptInvitation = async (
 		subject: "Candidate Accepted Invitation",
 		html,
 	});
+
+	return {
+		assessment: {
+			id: invitation.assessment.id,
+			title: invitation.assessment.title,
+		},
+	};
 };
 
 export const InvitationService = {
