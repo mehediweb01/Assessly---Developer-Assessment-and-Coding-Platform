@@ -1,0 +1,12 @@
+model AttemptAnswer {
+  id         String   @id @default(uuid())
+  attemptId  String
+  questionId String
+  answer     String
+  updatedAt  DateTime @updatedAt
+
+  attempt  Attempt  @relation(fields: [attemptId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+}

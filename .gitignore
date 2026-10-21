@@ -16,3 +16,6 @@ pnpm-workspace.yaml
 # local share file
 .stignore
 .stfolder
+
+# Local Prisma migration backup
+prisma/migrations_backup/

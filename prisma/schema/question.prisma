@@ -16,7 +16,8 @@ model Question {
   inputFormat   String?
   outputFormat  String?
 
-  submission Submission?
+  submission     Submission?
+  attemptAnswers AttemptAnswer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

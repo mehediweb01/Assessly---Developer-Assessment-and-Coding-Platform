@@ -13,8 +13,9 @@ model Attempt {
   expiresAt   DateTime
   submittedAt DateTime?
 
-  submissions Submission[]
-  results     Result?
+  submissions    Submission[]
+  results        Result?
+  attemptAnswers AttemptAnswer[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
