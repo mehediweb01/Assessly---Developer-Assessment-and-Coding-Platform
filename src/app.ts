@@ -13,6 +13,7 @@ import { AssessmentRoutes } from "./app/module/asstessment/assessment.route";
 import { AuthRoutes } from "./app/module/auth/auth.route";
 import { InvitationRoutes } from "./app/module/invitation/invitation.route";
 import { PaymentRoutes } from "./app/module/payment/payment.route";
+import { AttemptRoutes } from "./app/module/attempt/attempt.route";
 
 const app: Application = express();
 
@@ -43,6 +44,7 @@ app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/payment", PaymentRoutes);
 app.use("/api/v1/assessment", AssessmentRoutes);
 app.use("/api/v1/invitation", InvitationRoutes);
+app.use("/api/v1/attempts", AttemptRoutes);
 
 app.use(globalErrorHandler);
 app.use(notFound);
