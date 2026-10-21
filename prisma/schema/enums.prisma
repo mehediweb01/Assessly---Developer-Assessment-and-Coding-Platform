@@ -25,6 +25,7 @@ enum InvitationStatus {
 enum AttemptStatus {
   IN_PROGRESS
   COMPLETED
+  EXPIRED
 }
 
 enum ResultStatus {

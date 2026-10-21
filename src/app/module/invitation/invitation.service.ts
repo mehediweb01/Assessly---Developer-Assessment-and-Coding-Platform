@@ -152,6 +152,12 @@ const sendInvitation = async (
 			name: isUserExits.name,
 			email: isUserExits.email,
 		},
+		invitation: {
+			id: invitation.id,
+			status: invitation.status,
+			sendAt: invitation.sendAt,
+			expiresAt: invitation.expiresAt,
+		},
 	};
 };
 
