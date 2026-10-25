@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { UserRole } from "../../../generated/prisma/enums";
 import { auth } from "../../middleware/checkAuth";
-import { AttemptAnswerController } from "./attempt.controller";
+import { AttemptController } from "./attempt.controller";
 
 const router = Router();
 
 router.get(
-	"/answer/:questionID",
+	"/answer/:attemptID/:questionID",
 	auth(UserRole.CANDIDATE),
-	AttemptAnswerController.answerQuestion,
+	AttemptController.answerQuestion,
 );
 
 export const AttemptRoutes = router;
