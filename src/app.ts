@@ -9,11 +9,11 @@ import httpStatus from "http-status";
 import config from "./app/config";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
-import { AssessmentRoutes } from "./app/module/asstessment/assessment.route";
+import { AssessmentRoutes } from "./app/module/assessment/assessment.route";
+import { AttemptRoutes } from "./app/module/attempt/attempt.route";
 import { AuthRoutes } from "./app/module/auth/auth.route";
 import { InvitationRoutes } from "./app/module/invitation/invitation.route";
 import { PaymentRoutes } from "./app/module/payment/payment.route";
-import { AttemptRoutes } from "./app/module/attempt/attempt.route";
 
 const app: Application = express();
 
