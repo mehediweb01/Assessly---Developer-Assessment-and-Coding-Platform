@@ -1,5 +1,14 @@
 import { Router } from "express";
+import { UserRole } from "../../../generated/prisma/enums";
+import { auth } from "../../middleware/checkAuth";
+import { AttemptAnswerController } from "./attempt.controller";
 
-const route = Router();
+const router = Router();
 
-export const AttemptRoutes = route;
+router.get(
+	"/answer/:questionID",
+	auth(UserRole.CANDIDATE),
+	AttemptAnswerController.answerQuestion,
+);
+
+export const AttemptRoutes = router;
