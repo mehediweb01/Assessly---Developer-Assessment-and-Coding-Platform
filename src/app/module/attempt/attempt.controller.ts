@@ -8,10 +8,12 @@ import { AttemptService } from "./attempt.service";
 const answerQuestion = catchAsync(async (req: Request, res: Response) => {
 	const { questionID, attemptID } = req.params;
 	const user = req.user as IRequestUser;
+	const answer = req.body
 
 	const result = await AttemptService.answerQuestion(
 		questionID as string,
 		attemptID as string,
+		answer,
 		user,
 	);
 
