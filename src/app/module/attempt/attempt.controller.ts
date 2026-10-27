@@ -22,6 +22,23 @@ const getAllQuestions = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const getSingleQuestion = catchAsync(async (req: Request, res: Response) => {
+	const user = req.user as IRequestUser;
+	const { questionID } = req.params;
+
+	const result = await AttemptService.getSingleQuestion(
+		questionID as string,
+		user,
+	);
+
+	sendResponse(res, {
+		success: true,
+		statusCode: httpStatus.OK,
+		message: "Get single question successfully!",
+		data: result,
+	});
+});
+
 const answerQuestion = catchAsync(async (req: Request, res: Response) => {
 	const { questionID, attemptID } = req.params;
 	const user = req.user as IRequestUser;
@@ -44,5 +61,6 @@ const answerQuestion = catchAsync(async (req: Request, res: Response) => {
 
 export const AttemptController = {
 	getAllQuestions,
+	getSingleQuestion,
 	answerQuestion,
 };

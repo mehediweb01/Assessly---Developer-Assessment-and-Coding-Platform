@@ -20,10 +20,6 @@ const getAllQuestions = async (assessmentId: string, user: IRequestUser) => {
 		throw new Error(`User doesn't exist!`);
 	}
 
-	if (isExistingUser.role !== UserRole.CANDIDATE) {
-		throw new Error(`User not authorized!`);
-	}
-
 	if (!isExistingUser.isActive) {
 		throw new Error(`User is not active!`);
 	}
@@ -50,9 +46,102 @@ const getAllQuestions = async (assessmentId: string, user: IRequestUser) => {
 		where: {
 			assessmentId: assessmentId,
 		},
+		select: {
+			id: true,
+			title: true,
+			type: true,
+			options: true,
+			isDeleted: true,
+			deletedAt: true,
+			description: true,
+			mark: true,
+			inputFormat: true,
+			outputFormat: true,
+			starterCode: true,
+			assessment: {
+				select: {
+					id: true,
+					title: true,
+					startDateTime: true,
+					endDateTime: true,
+					isDeleted: true,
+					deletedAt: true,
+					description: true,
+					duration: true,
+				},
+			},
+		},
 	});
 
 	return questions;
+};
+
+const getSingleQuestion = async (questionId: string, user: IRequestUser) => {
+	if (!questionId) {
+		throw new Error(`QuestionId is required!`);
+	}
+
+	const isExistingUser = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			candidate: true,
+		},
+	});
+
+	if (!isExistingUser) {
+		throw new Error(`User doesn't exist!`);
+	}
+
+	if (!isExistingUser.isActive) {
+		throw new Error(`User is not active!`);
+	}
+
+	if (isExistingUser.isDeleted || isExistingUser.deletedAt) {
+		throw new Error(`User is deleted!`);
+	}
+
+	const question = await prisma.question.findUnique({
+		where: {
+			id: questionId,
+		},
+		select: {
+			id: true,
+			title: true,
+			type: true,
+			options: true,
+			isDeleted: true,
+			deletedAt: true,
+			description: true,
+			mark: true,
+			inputFormat: true,
+			outputFormat: true,
+			starterCode: true,
+			assessment: {
+				select: {
+					id: true,
+					title: true,
+					startDateTime: true,
+					endDateTime: true,
+					isDeleted: true,
+					deletedAt: true,
+					description: true,
+					duration: true,
+				},
+			},
+		},
+	});
+
+	if (!question) {
+		throw new Error(`Question doesn't exist!`);
+	}
+
+	if (question.isDeleted || question.deletedAt) {
+		throw new Error(`Question is deleted!`);
+	}
+
+	return question;
 };
 
 const answerQuestion = async (
@@ -182,5 +271,6 @@ const answerQuestion = async (
 
 export const AttemptService = {
 	getAllQuestions,
+	getSingleQuestion,
 	answerQuestion,
 };

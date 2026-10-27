@@ -7,8 +7,14 @@ const router = Router();
 
 router.get(
 	"/all-questions/:assessmentID",
-	auth(UserRole.CANDIDATE),
+	auth(UserRole.CANDIDATE, UserRole.COMPANY, UserRole.ADMIN),
 	AttemptController.getAllQuestions,
+);
+
+router.get(
+	"/single-questions/:questionID",
+	auth(UserRole.CANDIDATE, UserRole.COMPANY, UserRole.ADMIN),
+	AttemptController.getSingleQuestion,
 );
 
 router.post(
