@@ -1,13 +1,22 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/app.ts"],
+  entry: ["src/server.ts"],
   format: ["esm"],
-  platform: "node",
-  target: "node22",
+  target: "esnext",
+  outDir: "dist",
+  clean: true,
   bundle: true,
   splitting: false,
-  clean: true,
-  outDir: "dist",
-  external: ["@prisma/client"],
+  sourcemap: true,
+
+  banner: {
+    js: `
+
+   import { createRequire } from 'module';
+
+   const require = createRequire(import.meta.url);
+
+  `,
+  },
 });
