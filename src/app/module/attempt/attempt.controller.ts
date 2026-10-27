@@ -59,8 +59,23 @@ const answerQuestion = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const submitAttempt = catchAsync(async (req: Request, res: Response) => {
+	const { attemptID } = req.params;
+	const user = req.user as IRequestUser;
+
+	const result = await AttemptService.submitAttempt(attemptID as string, user);
+
+	sendResponse(res, {
+		success: true,
+		statusCode: httpStatus.OK,
+		message: "Submit the attempt successfully!",
+		data: result,
+	});
+});
+
 export const AttemptController = {
 	getAllQuestions,
 	getSingleQuestion,
 	answerQuestion,
+	submitAttempt,
 };

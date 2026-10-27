@@ -23,4 +23,10 @@ router.post(
 	AttemptController.answerQuestion,
 );
 
+router.post(
+	"/submit/:attemptID",
+	auth(UserRole.CANDIDATE),
+	AttemptController.submitAttempt,
+);
+
 export const AttemptRoutes = router;
