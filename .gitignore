@@ -19,3 +19,4 @@ pnpm-workspace.yaml
 
 # Local Prisma migration backup
 prisma/migrations_backup/
+.vercel
