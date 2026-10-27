@@ -2,6 +2,59 @@ import { InvitationStatus, UserRole } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import type { IRequestUser } from "../auth/auth.interface";
 
+const getAllQuestions = async (assessmentId: string, user: IRequestUser) => {
+	if (!assessmentId) {
+		throw new Error(`AssessmentId is required!`);
+	}
+
+	const isExistingUser = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			candidate: true,
+		},
+	});
+
+	if (!isExistingUser) {
+		throw new Error(`User doesn't exist!`);
+	}
+
+	if (isExistingUser.role !== UserRole.CANDIDATE) {
+		throw new Error(`User not authorized!`);
+	}
+
+	if (!isExistingUser.isActive) {
+		throw new Error(`User is not active!`);
+	}
+
+	if (isExistingUser.isDeleted || isExistingUser.deletedAt) {
+		throw new Error(`User is deleted!`);
+	}
+
+	const assessment = await prisma.assessment.findUnique({
+		where: {
+			id: assessmentId,
+		},
+	});
+
+	if (!assessment) {
+		throw new Error(`Assessment doesn't exist!`);
+	}
+
+	if (assessment.isDeleted || assessment.deletedAt) {
+		throw new Error(`Assessment is deleted!`);
+	}
+
+	const questions = await prisma.question.findMany({
+		where: {
+			assessmentId: assessmentId,
+		},
+	});
+
+	return questions;
+};
+
 const answerQuestion = async (
 	questionId: string,
 	attemptId: string,
@@ -128,5 +181,6 @@ const answerQuestion = async (
 };
 
 export const AttemptService = {
+	getAllQuestions,
 	answerQuestion,
 };
