@@ -5,7 +5,7 @@ import { AttemptController } from "./attempt.controller";
 
 const router = Router();
 
-router.get(
+router.post(
 	"/answer/:attemptID/:questionID",
 	auth(UserRole.CANDIDATE),
 	AttemptController.answerQuestion,

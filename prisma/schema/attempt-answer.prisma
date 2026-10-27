@@ -9,4 +9,5 @@ model AttemptAnswer {
   question Question @relation(fields: [questionId], references: [id])
 
   @@unique([attemptId, questionId])
+  @@map("attempt-answers")
 }
